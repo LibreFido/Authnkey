@@ -1,0 +1,350 @@
+package pl.lebihan.authnkey
+
+import java.math.BigInteger
+import java.security.*
+import java.security.interfaces.ECPublicKey
+import java.security.spec.*
+import javax.crypto.Cipher
+import javax.crypto.KeyAgreement
+import javax.crypto.Mac
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
+
+class PinProtocol(private val transport: FidoTransport) {
+
+    companion object {
+        const val PERMISSION_MC = 0x01
+        const val PERMISSION_GA = 0x02
+        const val PERMISSION_CM = 0x04
+        const val PERMISSION_BE = 0x08
+        const val PERMISSION_LBW = 0x10
+        const val PERMISSION_ACFG = 0x20
+    }
+
+    private var sharedSecret: ByteArray? = null
+    private var pinToken: ByteArray? = null
+    private var platformPublicKey: ECPublicKey? = null
+
+    suspend fun initialize(): Boolean {
+        try {
+            val keyAgreementResponse = transport.sendCtapCommand(buildGetKeyAgreementCommand())
+
+            if (!CTAP.isSuccess(keyAgreementResponse)) {
+                return false
+            }
+
+            val authenticatorPublicKey = parseKeyAgreementResponse(keyAgreementResponse)
+                ?: return false
+
+            val keyPairGenerator = KeyPairGenerator.getInstance("EC")
+            keyPairGenerator.initialize(ECGenParameterSpec("secp256r1"))
+            val ephemeralKeyPair = keyPairGenerator.generateKeyPair()
+
+            val keyAgreement = KeyAgreement.getInstance("ECDH")
+            keyAgreement.init(ephemeralKeyPair.private)
+            keyAgreement.doPhase(authenticatorPublicKey, true)
+            val rawSharedSecret = keyAgreement.generateSecret()
+
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            sharedSecret = sha256.digest(rawSharedSecret)
+
+            platformPublicKey = ephemeralKeyPair.public as ECPublicKey
+
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    suspend fun getPinToken(pin: String): Boolean {
+        val secret = sharedSecret ?: return false
+        val pubKey = platformPublicKey ?: return false
+
+        try {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            val pinHash = sha256.digest(pin.toByteArray(Charsets.UTF_8))
+            val pinHashLeft16 = pinHash.copyOf(16)
+
+            val encryptedPinHash = aesEncrypt(secret, pinHashLeft16)
+
+            val command = buildGetPinTokenCommand(pubKey, encryptedPinHash)
+            val response = transport.sendCtapCommand(command)
+
+            if (!CTAP.isSuccess(response)) {
+                return false
+            }
+
+            val encryptedToken = parsePinTokenResponse(response) ?: return false
+            pinToken = aesDecrypt(secret, encryptedToken)
+
+            return pinToken != null
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
+    suspend fun getPinToken(pin: String, permissions: Int, rpId: String? = null): Boolean {
+        val secret = sharedSecret ?: return false
+        val pubKey = platformPublicKey ?: return false
+
+        try {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+            val pinHash = sha256.digest(pin.toByteArray(Charsets.UTF_8))
+            val pinHashLeft16 = pinHash.copyOf(16)
+
+            val encryptedPinHash = aesEncrypt(secret, pinHashLeft16)
+
+            val command = buildGetPinTokenWithPermissionsCommand(pubKey, encryptedPinHash, permissions, rpId)
+            val response = transport.sendCtapCommand(command)
+
+            if (response.isEmpty()) {
+                return false
+            }
+
+            if (CTAP.isSuccess(response)) {
+                val encryptedToken = parsePinTokenResponse(response) ?: return false
+                pinToken = aesDecrypt(secret, encryptedToken)
+                return pinToken != null
+            }
+
+            val error = CTAP.getResponseError(response)
+            val fallbackErrors = listOf(
+                CTAP.Error.INVALID_COMMAND,
+                CTAP.Error.INVALID_PARAMETER,
+                CTAP.Error.CBOR_UNEXPECTED_TYPE,
+                CTAP.Error.MISSING_PARAMETER
+            )
+            if (error in fallbackErrors) {
+                return getPinToken(pin)
+            }
+
+            return false
+
+        } catch (e: Exception) {
+            return getPinToken(pin)
+        }
+    }
+
+    suspend fun getPinRetries(): Int? {
+        try {
+            val response = transport.sendCtapCommand(CTAP.buildGetPinRetriesCommand())
+            if (!CTAP.isSuccess(response)) {
+                return null
+            }
+
+            val data = response.drop(1).toByteArray()
+            val parsed = CborMap.decode(data)
+            return parsed?.int(3)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    sealed class PinChangeError(message: String) : Exception(message) {
+        object InvalidPin : PinChangeError("Current PIN is incorrect")
+        object PinBlocked : PinChangeError("PIN is blocked due to too many incorrect attempts")
+        object PinPolicyViolation : PinChangeError("New PIN does not meet authenticator requirements")
+        object PinNotSet : PinChangeError("No PIN is set on this authenticator")
+        data class Other(val errorName: String) : PinChangeError(errorName)
+    }
+
+    suspend fun changePin(currentPin: String, newPin: String): Result<Unit> {
+        val secret = sharedSecret ?: return Result.failure(Exception("Shared secret not available"))
+        val pubKey = platformPublicKey ?: return Result.failure(Exception("Platform key not available"))
+
+        try {
+            val sha256 = MessageDigest.getInstance("SHA-256")
+
+            val currentPinHash = sha256.digest(currentPin.toByteArray(Charsets.UTF_8))
+            val currentPinHashLeft16 = currentPinHash.copyOf(16)
+
+            val newPinBytes = newPin.toByteArray(Charsets.UTF_8)
+            val newPinPadded = ByteArray(64)
+            newPinBytes.copyInto(newPinPadded, 0, 0, newPinBytes.size)
+
+            val encryptedCurrentPinHash = aesEncrypt(secret, currentPinHashLeft16)
+            val encryptedNewPin = aesEncrypt(secret, newPinPadded)
+
+            val mac = Mac.getInstance("HmacSHA256")
+            mac.init(SecretKeySpec(secret, "HmacSHA256"))
+            mac.update(encryptedNewPin)
+            mac.update(encryptedCurrentPinHash)
+            val hmacResult = mac.doFinal()
+            val pinUvAuthParam = hmacResult.copyOf(16)
+
+            val command = buildChangePinCommand(pubKey, encryptedNewPin, encryptedCurrentPinHash, pinUvAuthParam)
+            val response = transport.sendCtapCommand(command)
+
+            if (response.isEmpty()) {
+                return Result.failure(PinChangeError.Other("Empty response"))
+            }
+
+            if (CTAP.isSuccess(response)) {
+                return Result.success(Unit)
+            }
+
+            return when (CTAP.getResponseError(response)) {
+                CTAP.Error.PIN_INVALID -> Result.failure(PinChangeError.InvalidPin)
+                CTAP.Error.PIN_BLOCKED -> Result.failure(PinChangeError.PinBlocked)
+                CTAP.Error.PIN_POLICY_VIOLATION -> Result.failure(PinChangeError.PinPolicyViolation)
+                CTAP.Error.PIN_NOT_SET -> Result.failure(PinChangeError.PinNotSet)
+                else -> Result.failure(PinChangeError.Other(CTAP.getErrorName(response[0])))
+            }
+
+        } catch (e: Exception) {
+            return Result.failure(e)
+        }
+    }
+
+    fun hasPinToken(): Boolean = pinToken != null
+
+    fun computeAuthParam(message: ByteArray): ByteArray? {
+        val token = pinToken ?: return null
+
+        try {
+            val mac = Mac.getInstance("HmacSHA256")
+            mac.init(SecretKeySpec(token, "HmacSHA256"))
+            val hmacResult = mac.doFinal(message)
+            return hmacResult.copyOf(16)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    private fun buildGetKeyAgreementCommand(): ByteArray {
+        return byteArrayOf(CTAP.CMD_CLIENT_PIN.toByte()) + cbor {
+            map {
+                1 to 1
+                2 to 2
+            }
+        }
+    }
+
+    private fun buildGetPinTokenCommand(platformKey: ECPublicKey, encryptedPinHash: ByteArray): ByteArray {
+        return byteArrayOf(CTAP.CMD_CLIENT_PIN.toByte()) + cbor {
+            map {
+                1 to 1
+                2 to 5
+                3 to encodeCoseKey(platformKey)
+                6 to bytes(encryptedPinHash)
+            }
+        }
+    }
+
+    private fun buildGetPinTokenWithPermissionsCommand(
+        platformKey: ECPublicKey,
+        encryptedPinHash: ByteArray,
+        permissions: Int,
+        rpId: String? = null
+    ): ByteArray {
+        return byteArrayOf(CTAP.CMD_CLIENT_PIN.toByte()) + cbor {
+            map {
+                1 to 1
+                2 to 9
+                3 to encodeCoseKey(platformKey)
+                6 to bytes(encryptedPinHash)
+                9 to permissions
+                if (rpId != null) {
+                    0x0A to rpId
+                }
+            }
+        }
+    }
+
+    private fun buildChangePinCommand(
+        platformKey: ECPublicKey,
+        encryptedNewPin: ByteArray,
+        encryptedCurrentPinHash: ByteArray,
+        pinUvAuthParam: ByteArray
+    ): ByteArray {
+        return byteArrayOf(CTAP.CMD_CLIENT_PIN.toByte()) + cbor {
+            map {
+                1 to 1
+                2 to 4
+                3 to encodeCoseKey(platformKey)
+                4 to bytes(pinUvAuthParam)
+                5 to bytes(encryptedNewPin)
+                6 to bytes(encryptedCurrentPinHash)
+            }
+        }
+    }
+
+    private fun CborMapEncoder.encodeCoseKey(publicKey: ECPublicKey): CborRaw {
+        val point = publicKey.w
+        val x = bigIntegerToBytes(point.affineX, 32)
+        val y = bigIntegerToBytes(point.affineY, 32)
+
+        return map {
+            1 to 2
+            3 to -25
+            -1 to 1
+            -2 to bytes(x)
+            -3 to bytes(y)
+        }
+    }
+
+    private fun parseKeyAgreementResponse(response: ByteArray): ECPublicKey? {
+        try {
+            val data = response.drop(1).toByteArray()
+            val parsed = CborMap.decode(data) ?: return null
+
+            val coseKey = parsed.map(1) ?: return null
+
+            val x = coseKey.bytes(-2) ?: return null
+            val y = coseKey.bytes(-3) ?: return null
+
+            return createECPublicKey(x, y)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    private fun parsePinTokenResponse(response: ByteArray): ByteArray? {
+        try {
+            val data = response.drop(1).toByteArray()
+            val parsed = CborMap.decode(data) ?: return null
+
+            return parsed.bytes(2)
+        } catch (e: Exception) {
+            return null
+        }
+    }
+
+    private fun aesEncrypt(key: ByteArray, data: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance("AES/CBC/NoPadding")
+        val secretKey = SecretKeySpec(key, "AES")
+        val iv = IvParameterSpec(ByteArray(16))
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, iv)
+        return cipher.doFinal(data)
+    }
+
+    private fun aesDecrypt(key: ByteArray, data: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance("AES/CBC/NoPadding")
+        val secretKey = SecretKeySpec(key, "AES")
+        val iv = IvParameterSpec(ByteArray(16))
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, iv)
+        return cipher.doFinal(data)
+    }
+
+    private fun createECPublicKey(x: ByteArray, y: ByteArray): ECPublicKey {
+        val ecPoint = ECPoint(BigInteger(1, x), BigInteger(1, y))
+
+        val paramSpec = ECGenParameterSpec("secp256r1")
+        val keyPairGenerator = KeyPairGenerator.getInstance("EC")
+        keyPairGenerator.initialize(paramSpec)
+        val params = (keyPairGenerator.generateKeyPair().public as ECPublicKey).params
+
+        val pubKeySpec = ECPublicKeySpec(ecPoint, params)
+        val keyFactory = KeyFactory.getInstance("EC")
+        return keyFactory.generatePublic(pubKeySpec) as ECPublicKey
+    }
+
+    private fun bigIntegerToBytes(value: BigInteger, length: Int): ByteArray {
+        val bytes = value.toByteArray()
+        return when {
+            bytes.size == length -> bytes
+            bytes.size > length -> bytes.copyOfRange(bytes.size - length, bytes.size)
+            else -> ByteArray(length - bytes.size) + bytes
+        }
+    }
+}

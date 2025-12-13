@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Authnkey</string>
+
+    <!-- Credential Provider Service -->
+    <string name="credential_entry_title">Security Key</string>
+    <string name="credential_entry_use">Use Security Key</string>
+    <string name="credential_entry_tap">Tap your security key</string>
+    <string name="credential_create_description">Create passkey on your security key for %1$s</string>
+    <string name="credential_get_description">Use your security key for %1$s</string>
+
+    <!-- Bottom Sheet -->
+    <string name="security_key">Security Key</string>
+    <string name="create_passkey">Create Passkey</string>
+    <string name="sign_in">Sign In</string>
+    <string name="cancel">Cancel</string>
+
+    <!-- Instructions -->
+    <string name="instruction_connect_key">Hold your security key against the back of your phone, or plug it in via USB</string>
+    <string name="instruction_touch_key">Touch your security key to confirm…</string>
+    <string name="instruction_signing_in">Signing in…</string>
+    <string name="instruction_creating">Creating passkey…</string>
+    <string name="instruction_enter_pin">Enter your security key PIN</string>
+    <string name="instruction_usb_permission_denied">USB permission denied. Try again or use NFC.</string>
+    <string name="instruction_key_connected">Security key connected</string>
+    <string name="instruction_connecting_usb">Connecting to USB device…</string>
+    <string name="instruction_authenticating">Authenticating…</string>
+    <string name="instruction_initializing">Initializing…</string>
+    <string name="instruction_verifying">Verifying…</string>
+    <string name="instruction_verifying_pin">Verifying PIN…</string>
+
+    <!-- PIN Dialog -->
+    <string name="pin_dialog_title">Security Key PIN</string>
+    <string name="pin_dialog_message">Enter your security key PIN</string>
+    <string name="pin_hint">Enter PIN</string>
+    <string name="pin_continue">Continue</string>
+    <string name="pin_too_short">PIN must be at least 4 characters</string>
+    <string name="pin_retries_remaining">Enter PIN (%1$d retries remaining)</string>
+    <string name="pin_invalid_retries">Invalid PIN. %1$d retries remaining</string>
+
+    <!-- Errors -->
+    <string name="error_format">Error: %1$s\n\nTry again or cancel</string>
+    <string name="error_retry_format">Error: %1$s\n\nTry again</string>
+    <string name="error_user_cancelled">User cancelled</string>
+    <string name="error_no_request">No valid request found</string>
+    <string name="error_generic">Error: %1$s</string>
+    <string name="error_generic_with_trace">Error: %1$s\n\n%2$s</string>
+    <string name="error_metadata">Error getting metadata: %1$s</string>
+    <string name="error_could_not_get_pin_status">Error: Could not get PIN status</string>
+    <string name="error_pins_dont_match">Error: New PINs don\'t match</string>
+    <string name="error_uv_required_no_pin">User verification required but no PIN is set on your security key</string>
+
+    <!-- Content descriptions -->
+    <string name="security_key_icon_desc">Security Key</string>
+    <string name="drag_handle_desc">Drag handle</string>
+
+    <!-- MainActivity (Debug) -->
+    <string name="usb_permission_denied">USB permission denied</string>
+    <string name="nfc_connected">Security key connected via NFC!</string>
+    <string name="usb_connected">Security key connected via USB!</string>
+    <string name="nfc_error">NFC Error: %1$s</string>
+    <string name="usb_error">USB Error: %1$s</string>
+    <string name="no_devices_title">No Devices Found</string>
+    <string name="no_devices_message">No FIDO security keys detected.\n\nMake sure your security key is plugged in.</string>
+    <string name="ok">OK</string>
+    <string name="select_security_key">Select Security Key</string>
+    <string name="connecting_usb">Connecting to USB device…</string>
+    <string name="connected_via">Connected via %1$s</string>
+    <string name="not_connected">Not connected</string>
+    <string name="waiting_for_key">Hold your security key against the back of your phone, or plug it in via USB</string>
+    <string name="connection_lost">Connection lost</string>
+    <string name="waiting_reconnection">Waiting for reconnection…</string>
+    <string name="connection_lost_title">Connection Lost</string>
+    <string name="connection_lost_message">Hold your security key against the back of your phone to continue.</string>
+    <string name="operation_cancelled">Operation cancelled</string>
+    <string name="reading_device_info">Reading device info…</string>
+    <string name="checking_cred_mgmt">Checking credential management support…</string>
+    <string name="error_parse_device_info">Error: Could not parse device info</string>
+    <string name="error_pin_blocked">Error: PIN is blocked. Device needs to be reset.</string>
+    <string name="error_pin_status">Could not get PIN status</string>
+    <string name="pin_required_title">PIN Required</string>
+    <string name="pin_required_message">Enter your PIN to list credentials.\n\nRetries remaining: %1$d</string>
+    <string name="error_pin_min_length">Error: PIN must be at least 4 characters</string>
+    <string name="authenticating">Authenticating…</string>
+    <string name="error_init_pin_protocol">Error: Failed to initialize PIN protocol</string>
+    <string name="verifying_pin">Verifying PIN…</string>
+    <string name="error_invalid_pin">Error: Invalid PIN</string>
+    <string name="getting_metadata">Getting credential metadata…</string>
+    <string name="enumerating_rps">Enumerating relying parties…</string>
+    <string name="loading_credentials_for">Loading credentials for %1$s…</string>
+    <string name="checking_pin_status">Checking PIN status…</string>
+    <string name="pin_retries_status">PIN retries remaining: %1$d</string>
+    <string name="change_pin_title">Change PIN</string>
+    <string name="change">Change</string>
+    <string name="initializing_pin_protocol">Initializing PIN protocol…</string>
+    <string name="changing_pin">Changing PIN…</string>
+    
+    <!-- PIN Change Status Messages -->
+    <string name="pin_change_success_title">PIN Changed Successfully</string>
+    <string name="pin_change_success_message">Your authenticator PIN has been changed.\nPlease use the new PIN for future operations.</string>
+    
+    <string name="pin_invalid_title">Invalid PIN</string>
+    <string name="pin_invalid_message">The current PIN you entered is incorrect.\n\nPlease verify your current PIN and try again.</string>
+    
+    <string name="pin_blocked_title">PIN Blocked</string>
+    <string name="pin_blocked_message">Your authenticator PIN is blocked due to too many incorrect attempts.\n\nYou will need to reset your authenticator.</string>
+    
+    <string name="pin_policy_violation_title">PIN Policy Violation</string>
+    <string name="pin_policy_violation_message">The new PIN does not meet the authenticator\'s requirements.\n\nPINs must be at least 4 characters (or more, depending on the authenticator) and at most 63 bytes.</string>
+    
+    <string name="pin_not_set_title">No PIN Set</string>
+    <string name="pin_not_set_message">Your authenticator does not have a PIN set.\n\nUse "Set PIN" instead of "Change PIN".</string>
+    
+    <string name="pin_change_failed_title">PIN Change Failed</string>
+    <string name="pin_change_failed_message">Error: %1$s\n\nPlease try again or consult your authenticator\'s documentation.</string>
+    
+    <!-- Credential Management -->
+    <string name="credential_management_title">Credential Management</string>
+    <string name="credential_management_not_supported">This authenticator does not support credential management.</string>
+    <string name="credential_stored_count">Stored credentials: %1$d</string>
+    <string name="credential_remaining_slots">Remaining slots: %1$d</string>
+    <string name="credential_no_credentials">No credentials stored on this device.</string>
+    <string name="credential_no_rps">No relying parties found.</string>
+    <string name="credential_found_rps">Found %1$d relying party(ies):</string>
+    <string name="credential_rp_name">Name: %1$s</string>
+    <string name="credential_rp_header">RP %1$d: %2$s</string>
+    <string name="credential_number">Credential %1$d:</string>
+    <string name="credential_username">Username: %1$s</string>
+    <string name="credential_display_name">Display Name: %1$s</string>
+    <string name="credential_user_id">User ID: %1$s</string>
+    <string name="credential_id">Credential ID: %1$s...</string>
+    <string name="credential_protection">Protection: %1$s</string>
+    <string name="credential_error_enumerate_rps">Error enumerating RPs: %1$s</string>
+    <string name="credential_error_loading">Error: %1$s</string>
+    
+    <!-- Device Info -->
+    <string name="device_info_title">Device Info</string>
+    <string name="device_info_error">Error: %1$s</string>
+    <string name="device_info_versions">Versions: %1$s</string>
+    <string name="device_info_extensions">Extensions: %1$s</string>
+    <string name="device_info_aaguid">AAGUID: %1$s</string>
+    <string name="device_info_options">Options:</string>
+    <string name="device_info_option_item">  %1$s: %2$s</string>
+    <string name="device_info_max_msg_size">Max Message Size: %1$d</string>
+    <string name="device_info_pin_protocols">PIN/UV Auth Protocols: %1$s</string>
+    <string name="device_info_max_creds_in_list">Max Credentials in List: %1$d</string>
+    <string name="device_info_max_cred_id_length">Max Credential ID Length: %1$d</string>
+    <string name="device_info_transports">Transports: %1$s</string>
+    <string name="device_info_algorithms">Supported Algorithms:</string>
+    <string name="device_info_algorithm_item">  Type: %1$s, Algorithm: %2$s</string>
+    <string name="device_info_min_pin_length">Min PIN Length: %1$d</string>
+    <string name="device_info_firmware">Firmware Version: %1$d</string>
+    
+    <string name="choose_account">Choose an account</string>
+    <string name="unknown_account">Unknown account</string>
+    
+    <string name="provider_enabled">✓ Passkey provider enabled</string>
+    <string name="provider_not_enabled">Passkey provider not enabled</string>
+    <string name="unknown_device">Unknown Device</string>
+    <string name="device_info_format">VID: %1$s, PID: %2$s</string>
+</resources>
