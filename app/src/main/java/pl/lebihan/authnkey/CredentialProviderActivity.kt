@@ -530,21 +530,24 @@ class CredentialProviderActivity : AppCompatActivity() {
                 }
 
                 setInstruction(getString(R.string.instruction_verifying_pin))
-                // Try CTAP2.1 style with permissions first
-                val authenticated = withContext(Dispatchers.IO) {
-                    protocol.getPinToken(pin, permissions, rpId)
-                }
-                if (!authenticated) {
-                    val retries = withContext(Dispatchers.IO) { protocol.getPinRetries() }.getOrThrow()
-                    if (retries > 0) {
-                        runOnUiThread {
-                            showProgress(false)
-                            setInstruction(getString(R.string.pin_invalid_retries, retries))
-                            setState(CredentialBottomSheet.State.PIN)
-                            bottomSheet?.showPinInput(true)
+                // Try CTAP2.1 style with permissions first (falls back to basic internally)
+                withContext(Dispatchers.IO) {
+                    protocol.requestPinToken(pin, permissions, rpId)
+                }.onFailure { e ->
+                    if (e is CTAP.Exception && e.error == CTAP.Error.PIN_INVALID) {
+                        val retries = withContext(Dispatchers.IO) { protocol.getPinRetries() }.getOrThrow()
+                        if (retries > 0) {
+                            runOnUiThread {
+                                showProgress(false)
+                                setInstruction(getString(R.string.pin_invalid_retries, retries))
+                                setState(CredentialBottomSheet.State.PIN)
+                                bottomSheet?.showPinInput(true)
+                            }
+                        } else {
+                            throw Exception(getString(R.string.error_pin_blocked))
                         }
                     } else {
-                        throw Exception(getString(R.string.error_pin_blocked))
+                        throw e
                     }
                     return@launch
                 }

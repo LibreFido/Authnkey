@@ -503,17 +503,23 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 resultText.text = getString(R.string.verifying_pin)
-                val authenticated = withContext(Dispatchers.IO) {
-                    if (usePreviewCommand) protocol.getPinToken(pin)
-                    else protocol.getPinToken(pin, PinProtocol.PERMISSION_CM)
-                }
-                if (!authenticated) {
-                    if (isNfcDisconnected()) {
-                        showNfcReconnectDialog()
-                    } else {
-                        resultText.text = getString(R.string.error_invalid_pin)
-                        pendingAction = null
+                withContext(Dispatchers.IO) {
+                    if (usePreviewCommand) protocol.requestPinToken(pin)
+                    else protocol.requestPinToken(pin, PinProtocol.PERMISSION_CM)
+                }.onFailure { e ->
+                    when {
+                        e is java.io.IOException -> throw e
+                        e is CTAP.Exception && e.error == CTAP.Error.PIN_INVALID -> {
+                            resultText.text = getString(R.string.error_invalid_pin)
+                        }
+                        e is CTAP.Exception && e.error == CTAP.Error.PIN_BLOCKED -> {
+                            resultText.text = getString(R.string.error_pin_blocked)
+                        }
+                        else -> {
+                            resultText.text = getString(R.string.error_generic, e.message ?: "")
+                        }
                     }
+                    pendingAction = null
                     return@launch
                 }
 

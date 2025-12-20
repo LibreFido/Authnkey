@@ -56,11 +56,13 @@ class PinProtocol(private val transport: FidoTransport) {
         }
     }
 
-    suspend fun getPinToken(pin: String): Boolean {
-        val secret = sharedSecret ?: return false
-        val pubKey = platformPublicKey ?: return false
+    suspend fun requestPinToken(pin: String): Result<Unit> {
+        val secret = sharedSecret
+            ?: return Result.failure(Exception("Shared secret not available"))
+        val pubKey = platformPublicKey
+            ?: return Result.failure(Exception("Platform key not available"))
 
-        try {
+        return try {
             val sha256 = MessageDigest.getInstance("SHA-256")
             val pinHash = sha256.digest(pin.toByteArray(Charsets.UTF_8))
             val pinHashLeft16 = pinHash.copyOf(16)
@@ -70,24 +72,28 @@ class PinProtocol(private val transport: FidoTransport) {
             val command = buildGetPinTokenCommand(pubKey, encryptedPinHash)
             val response = transport.sendCtapCommand(command)
 
-            if (!CTAP.isSuccess(response)) {
-                return false
+            val error = CTAP.getResponseError(response)
+            if (error != null) {
+                return Result.failure(CTAP.Exception(error))
             }
 
-            val encryptedToken = parsePinTokenResponse(response) ?: return false
+            val encryptedToken = parsePinTokenResponse(response)
+                ?: return Result.failure(Exception("Failed to parse PIN token"))
             pinToken = aesDecrypt(secret, encryptedToken)
 
-            return pinToken != null
+            Result.success(Unit)
         } catch (e: Exception) {
-            return false
+            Result.failure(e)
         }
     }
 
-    suspend fun getPinToken(pin: String, permissions: Int, rpId: String? = null): Boolean {
-        val secret = sharedSecret ?: return false
-        val pubKey = platformPublicKey ?: return false
+    suspend fun requestPinToken(pin: String, permissions: Int, rpId: String? = null): Result<Unit> {
+        val secret = sharedSecret
+            ?: return Result.failure(Exception("Shared secret not available"))
+        val pubKey = platformPublicKey
+            ?: return Result.failure(Exception("Platform key not available"))
 
-        try {
+        return try {
             val sha256 = MessageDigest.getInstance("SHA-256")
             val pinHash = sha256.digest(pin.toByteArray(Charsets.UTF_8))
             val pinHashLeft16 = pinHash.copyOf(16)
@@ -98,30 +104,34 @@ class PinProtocol(private val transport: FidoTransport) {
             val response = transport.sendCtapCommand(command)
 
             if (response.isEmpty()) {
-                return false
-            }
-
-            if (CTAP.isSuccess(response)) {
-                val encryptedToken = parsePinTokenResponse(response) ?: return false
-                pinToken = aesDecrypt(secret, encryptedToken)
-                return pinToken != null
+                return Result.failure(Exception("Empty response"))
             }
 
             val error = CTAP.getResponseError(response)
-            val fallbackErrors = listOf(
-                CTAP.Error.INVALID_COMMAND,
-                CTAP.Error.INVALID_PARAMETER,
-                CTAP.Error.CBOR_UNEXPECTED_TYPE,
-                CTAP.Error.MISSING_PARAMETER
-            )
-            if (error in fallbackErrors) {
-                return getPinToken(pin)
+            if (error != null) {
+                // Fallback to basic method if authenticator doesn't support permissions
+                val fallbackErrors = listOf(
+                    CTAP.Error.INVALID_COMMAND,
+                    CTAP.Error.INVALID_PARAMETER,
+                    CTAP.Error.CBOR_UNEXPECTED_TYPE,
+                    CTAP.Error.MISSING_PARAMETER
+                )
+                if (error in fallbackErrors) {
+                    return requestPinToken(pin)
+                }
+                return Result.failure(CTAP.Exception(error))
             }
 
-            return false
+            val encryptedToken = parsePinTokenResponse(response)
+                ?: return Result.failure(Exception("Failed to parse PIN token"))
+            pinToken = aesDecrypt(secret, encryptedToken)
 
+            Result.success(Unit)
+        } catch (e: java.io.IOException) {
+            Result.failure(e)
         } catch (e: Exception) {
-            return getPinToken(pin)
+            // On unexpected exception, try fallback to basic method
+            requestPinToken(pin)
         }
     }
 
