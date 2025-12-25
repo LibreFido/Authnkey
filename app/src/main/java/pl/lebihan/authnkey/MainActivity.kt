@@ -1,5 +1,6 @@
 package pl.lebihan.authnkey
 
+import android.animation.ObjectAnimator
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.ComponentName
@@ -7,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.nfc.NfcAdapter
@@ -18,11 +20,13 @@ import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -347,9 +351,23 @@ class MainActivity : AppCompatActivity() {
         statusText.text = getString(R.string.connection_lost)
         resultText.text = getString(R.string.waiting_reconnection)
 
-        reconnectDialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.connection_lost_title))
-            .setMessage(getString(R.string.connection_lost_message))
+        val dialogView = layoutInflater.inflate(R.layout.dialog_connection_lost, null)
+        val iconBackground = dialogView.findViewById<View>(R.id.iconBackground)
+
+        iconBackground.backgroundTintList = ColorStateList.valueOf(
+            ContextCompat.getColor(this, R.color.warning_container)
+        )
+
+        val pulseAnimator = ObjectAnimator.ofFloat(iconBackground, View.ALPHA, 1f, 0.3f).apply {
+            duration = 750
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+
+        reconnectDialog = MaterialAlertDialogBuilder(this)
+            .setView(dialogView)
             .setCancelable(false)
             .setNegativeButton(getString(R.string.cancel)) { _, _ ->
                 awaitingNfcReconnect = false
@@ -357,7 +375,10 @@ class MainActivity : AppCompatActivity() {
                 resultText.text = getString(R.string.operation_cancelled)
                 updateConnectionStatus()
             }
-            .show()
+            .setOnDismissListener { pulseAnimator.cancel() }
+            .create()
+
+        reconnectDialog?.show()
     }
 
     private fun getDeviceInfo() {
