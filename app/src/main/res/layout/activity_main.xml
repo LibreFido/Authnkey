@@ -74,6 +74,7 @@
         android:id="@+id/btnDeviceInfo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="56dp"
         android:text="@string/btn_show_device_status"
         android:enabled="false" />
 
@@ -81,6 +82,7 @@
         android:id="@+id/btnListCredentials"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="56dp"
         android:layout_marginTop="8dp"
         android:text="@string/btn_list_credentials"
         android:enabled="false" />
@@ -89,6 +91,7 @@
         android:id="@+id/btnChangePin"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="56dp"
         android:layout_marginTop="8dp"
         android:text="@string/btn_change_pin"
         android:enabled="false" />
