@@ -87,6 +87,27 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val usbAttachReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
+                val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE, UsbDevice::class.java)
+                } else {
+                    @Suppress("DEPRECATION")
+                    intent.getParcelableExtra(UsbManager.EXTRA_DEVICE)
+                }
+
+                if (device != null && UsbTransport.isFidoDevice(device) && currentTransport == null) {
+                    if (usbManager.hasPermission(device)) {
+                        connectToUsbDevice(device)
+                    } else {
+                        requestUsbPermission(device)
+                    }
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -125,7 +146,16 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(usbPermissionReceiver)
+        try {
+            unregisterReceiver(usbPermissionReceiver)
+        } catch (e: Exception) {
+            // Ignore
+        }
+        try {
+            unregisterReceiver(usbAttachReceiver)
+        } catch (e: Exception) {
+            // Ignore
+        }
         scope.cancel()
     }
 
@@ -147,6 +177,14 @@ class MainActivity : AppCompatActivity() {
             adapter.enableForegroundDispatch(this, pendingIntent, filters, techLists)
         }
 
+        // Register USB attach receiver
+        val usbAttachFilter = IntentFilter(UsbManager.ACTION_USB_DEVICE_ATTACHED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(usbAttachReceiver, usbAttachFilter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(usbAttachReceiver, usbAttachFilter)
+        }
+
         // Check if started by USB device attachment
         if (intent.action == UsbManager.ACTION_USB_DEVICE_ATTACHED) {
             val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -162,6 +200,11 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         nfcAdapter?.disableForegroundDispatch(this)
+        try {
+            unregisterReceiver(usbAttachReceiver)
+        } catch (e: Exception) {
+            // Ignore
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
