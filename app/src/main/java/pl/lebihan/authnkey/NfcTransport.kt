@@ -1,5 +1,6 @@
 package pl.lebihan.authnkey
 
+import android.nfc.TagLostException
 import android.nfc.tech.IsoDep
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -73,6 +74,9 @@ class NfcTransport(private val isoDep: IsoDep) : FidoTransport {
             }
 
             fullResponse.toByteArray()
+        } catch (e: TagLostException) {
+            close()
+            throw e
         } catch (e: SecurityException) {
             // Tag is out of date / disconnected
             throw java.io.IOException("NFC connection lost")
