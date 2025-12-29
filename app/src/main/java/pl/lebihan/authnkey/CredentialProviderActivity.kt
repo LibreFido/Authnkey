@@ -663,8 +663,8 @@ class CredentialProviderActivity : AppCompatActivity() {
         )
 
         runOnUiThread {
-            setInstruction(getString(R.string.instruction_touch_key))
             if (transport.transportType == TransportType.USB) {
+                setInstruction(getString(R.string.instruction_touch_key))
                 setState(CredentialBottomSheet.State.TOUCH)
             }
         }
@@ -796,8 +796,8 @@ class CredentialProviderActivity : AppCompatActivity() {
         )
 
         runOnUiThread {
-            setInstruction(getString(R.string.instruction_touch_key))
             if (transport.transportType == TransportType.USB) {
+                setInstruction(getString(R.string.instruction_touch_key))
                 setState(CredentialBottomSheet.State.TOUCH)
             }
         }
