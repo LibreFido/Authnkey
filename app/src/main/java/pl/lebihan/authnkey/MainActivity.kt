@@ -544,7 +544,7 @@ class MainActivity : AppCompatActivity() {
                 val protocol = pinProtocol ?: throw AuthnkeyError.PinProtocolNotInitialized()
                 val retries = withContext(Dispatchers.IO) { protocol.getPinRetries() }.getOrElse { e ->
                     if (e is java.io.IOException) throw e
-                    resultText.text = getString(R.string.error_could_not_get_pin_status)
+                    resultText.text = e.toUserMessage(this@MainActivity)
                     pendingAction = null
                     return@launch
                 }
