@@ -27,7 +27,6 @@
     <string name="pin_continue">Продолжить</string>
     <string name="pin_too_short">ПИН-код должен быть не менее 4 символов</string>
     <string name="pin_retries_remaining">Введите ПИН-код (осталось %1$d попыток)</string>
-    <string name="pin_invalid_retries">Неправильный ПИН. Осталось %1$d попыток</string>
     <string name="error_format">%1$s\n\nПовторите попытку или отмените</string>
     <string name="error_retry_format">%1$s\n\nПопробуй ещё раз</string>
     <string name="error_user_cancelled">Прервано пользователем</string>
@@ -35,7 +34,6 @@
     <string name="error_generic">Ошибка: %1$s</string>
     <string name="error_generic_with_trace">Ошибка :%1$s\n\n%2$s</string>
     <string name="error_metadata">Ошибка при получении метаданных: %1$s</string>
-    <string name="error_could_not_get_pin_status">Ошибка: не удалось получить статус ПИН-кода</string>
     <string name="error_pins_dont_match">Новые ПИН-коды не совпадают</string>
     <string name="error_uv_required_no_pin">Требуется подтверждение, но на вашем ключе безопасности не установлен ПИН-код</string>
     <string name="security_key_icon_desc">Ключ безопасности</string>
@@ -72,7 +70,6 @@
     <string name="authenticating">Аутентификация…</string>
     <string name="error_init_pin_protocol">Не удалось установить безопасное соединение</string>
     <string name="verifying_pin">Проверка ПИН-кода…</string>
-    <string name="error_invalid_pin">Ошибка: Неверный ПИН-код</string>
     <string name="getting_metadata">Получение метаданных учётных данных…</string>
     <string name="enumerating_rps">Перечисление зависимых сторон…</string>
     <string name="loading_credentials_for">Загрузка учётных данных для %1$s…</string>
