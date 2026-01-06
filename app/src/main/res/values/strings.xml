@@ -89,10 +89,7 @@
     <string name="security_key_detected">Security key detected</string>
     <string name="nfc_error">NFC Error: %1$s</string>
     <string name="usb_error">USB Error: %1$s</string>
-    <string name="no_devices_title">No Devices Found</string>
-    <string name="no_devices_message">No FIDO security keys detected.\n\nMake sure your security key is plugged in.</string>
     <string name="ok">OK</string>
-    <string name="select_security_key">Select Security Key</string>
     <string name="connecting_usb">Connecting to USB device…</string>
     <string name="using_nfc">Using NFC</string>
     <string name="using_usb">Using USB</string>
@@ -241,8 +238,6 @@
     <string name="btn_show_device_status">Show Device Status</string>
     <string name="btn_list_credentials">List Saved Credentials</string>
     <string name="btn_change_pin">Change PIN</string>
-    <string name="unknown_device">Unknown Device</string>
-    <string name="device_info_format">VID: %1$s, PID: %2$s</string>
     
     <!-- Credentials Dialog -->
     <string name="credentials_dialog_title">Stored Credentials</string>

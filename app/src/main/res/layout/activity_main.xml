@@ -57,13 +57,6 @@
         android:gravity="center"
         android:textColor="?android:attr/textColorSecondary" />
 
-    <Button
-        android:id="@+id/btnScanUsb"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Scan for USB Devices" />
-
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

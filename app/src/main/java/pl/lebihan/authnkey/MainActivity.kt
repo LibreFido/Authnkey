@@ -17,9 +17,7 @@ import android.nfc.tech.IsoDep
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.Button
 import android.widget.LinearLayout
@@ -33,8 +31,6 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.*
 
@@ -46,7 +42,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var connectionType: TextView
     private lateinit var resultText: TextView
-    private lateinit var btnScanUsb: Button
     private lateinit var btnDeviceInfo: Button
     private lateinit var btnListCredentials: Button
     private lateinit var btnChangePin: Button
@@ -137,7 +132,6 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         connectionType = findViewById(R.id.connectionType)
         resultText = findViewById(R.id.resultText)
-        btnScanUsb = findViewById(R.id.btnScanUsb)
         btnDeviceInfo = findViewById(R.id.btnDeviceInfo)
         btnListCredentials = findViewById(R.id.btnListCredentials)
         btnChangePin = findViewById(R.id.btnChangePin)
@@ -157,7 +151,6 @@ class MainActivity : AppCompatActivity() {
             registerReceiver(usbPermissionReceiver, filter)
         }
 
-        btnScanUsb.setOnClickListener { scanForUsbDevices() }
         btnDeviceInfo.setOnClickListener { getDeviceInfo() }
         btnListCredentials.setOnClickListener { listCredentials() }
         btnChangePin.setOnClickListener { showChangePinDialog() }
@@ -313,28 +306,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scanForUsbDevices() {
-        val devices = usbManager.deviceList.values
-            .filter { UsbTransport.isFidoDevice(it) }
-
-        if (devices.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle(getString(R.string.no_devices_title))
-                .setMessage(getString(R.string.no_devices_message))
-                .setPositiveButton(getString(R.string.ok), null)
-                .show()
-            return
-        }
-
-        if (devices.size == 1) {
-            handleUsbDevice(devices.first())
-            return
-        }
-
-        // Show device selection dialog
-        showDeviceSelectionDialog(devices)
-    }
-
     /**
      * Check for already-plugged USB FIDO devices and connect if found.
      * Only connects if there's exactly one device and we're not already connected.
@@ -357,25 +328,6 @@ class MainActivity : AppCompatActivity() {
                 requestUsbPermission(device)
             }
         }
-    }
-
-    private fun showDeviceSelectionDialog(devices: Collection<UsbDevice>) {
-        val dialogView = layoutInflater.inflate(R.layout.dialog_usb_devices, null)
-        val recyclerView = dialogView.findViewById<RecyclerView>(R.id.deviceList)
-
-        val dialog = AlertDialog.Builder(this)
-            .setTitle(getString(R.string.select_security_key))
-            .setView(dialogView)
-            .setNegativeButton(getString(R.string.cancel), null)
-            .create()
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = UsbDeviceAdapter(devices.toList()) { device ->
-            dialog.dismiss()
-            handleUsbDevice(device)
-        }
-
-        dialog.show()
     }
 
     private fun requestUsbPermission(device: UsbDevice) {
@@ -1161,38 +1113,4 @@ class MainActivity : AppCompatActivity() {
         private const val PREFS_NAME = "authnkey_prefs"
         private const val PREF_USE_NUMERIC_KEYBOARD = "use_numeric_keyboard"
     }
-}
-
-/**
- * RecyclerView adapter for USB device selection
- */
-class UsbDeviceAdapter(
-    private val devices: List<UsbDevice>,
-    private val onSelect: (UsbDevice) -> Unit
-) : RecyclerView.Adapter<UsbDeviceAdapter.ViewHolder>() {
-
-    class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val name: TextView = view.findViewById(R.id.deviceName)
-        val info: TextView = view.findViewById(R.id.deviceInfo)
-    }
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_usb_device, parent, false)
-        return ViewHolder(view)
-    }
-
-    override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val device = devices[position]
-        val context = holder.itemView.context
-        holder.name.text = device.productName ?: context.getString(R.string.unknown_device)
-        holder.info.text = context.getString(
-            R.string.device_info_format,
-            String.format("%04X", device.vendorId),
-            String.format("%04X", device.productId)
-        )
-        holder.itemView.setOnClickListener { onSelect(device) }
-    }
-
-    override fun getItemCount() = devices.size
 }
