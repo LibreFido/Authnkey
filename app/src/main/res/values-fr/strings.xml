@@ -86,16 +86,13 @@
 
     <!-- MainActivity (Debug) -->
     <string name="usb_permission_denied">Permission USB refusée</string>
-    <string name="nfc_connected">Clé de sécurité connectée via NFC !</string>
-    <string name="usb_connected">Clé de sécurité connectée via USB !</string>
+    <string name="security_key_detected">Clé de sécurité détectée</string>
     <string name="nfc_error">Erreur NFC : %1$s</string>
     <string name="usb_error">Erreur USB : %1$s</string>
-    <string name="no_devices_title">Aucun périphérique trouvé</string>
-    <string name="no_devices_message">Aucune clé de sécurité FIDO détectée.\n\nAssurez-vous que votre clé de sécurité est branchée.</string>
     <string name="ok">OK</string>
-    <string name="select_security_key">Sélectionner une clé de sécurité</string>
     <string name="connecting_usb">Connexion au périphérique USB…</string>
-    <string name="connected_via">Connecté via %1$s</string>
+    <string name="using_nfc">Utilisation du NFC</string>
+    <string name="using_usb">Utilisation de l\'USB</string>
     <string name="not_connected">Non connecté</string>
     <string name="waiting_for_key">Tenez votre clé de sécurité contre l\'arrière de votre téléphone, ou branchez-la via USB</string>
     <string name="connection_lost">Connexion perdue</string>
@@ -241,8 +238,6 @@
     <string name="btn_show_device_status">Afficher l\'état du périphérique</string>
     <string name="btn_list_credentials">Lister les identifiants enregistrés</string>
     <string name="btn_change_pin">Modifier le code PIN</string>
-    <string name="unknown_device">Périphérique inconnu</string>
-    <string name="device_info_format">VID : %1$s, PID : %2$s</string>
 
     <!-- Credentials Dialog -->
     <string name="credentials_dialog_title">Identifiants stockés</string>
