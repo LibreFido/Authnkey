@@ -114,6 +114,7 @@ class PinProtocol(private val transport: FidoTransport) {
                     CTAP.Error.INVALID_COMMAND,
                     CTAP.Error.INVALID_PARAMETER,
                     CTAP.Error.CBOR_UNEXPECTED_TYPE,
+                    CTAP.Error.INVALID_CBOR,
                     CTAP.Error.MISSING_PARAMETER,
                     CTAP.Error.UNSUPPORTED_OPTION,
                     CTAP.Error.INVALID_SUBCOMMAND,
