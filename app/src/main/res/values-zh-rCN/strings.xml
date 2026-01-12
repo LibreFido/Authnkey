@@ -70,16 +70,10 @@
     <string name="drag_handle_desc">拖动手柄</string>
     <string name="toggle_keyboard_type">切换键盘类型</string>
     <string name="usb_permission_denied">USB 权限被拒绝</string>
-    <string name="nfc_connected">安全密钥已通过 NFC 连接！</string>
-    <string name="usb_connected">安全密钥已通过 USB 连接！</string>
     <string name="nfc_error">NFC 错误：%1$s</string>
     <string name="usb_error">USB 错误：%1$s</string>
-    <string name="no_devices_title">未找到设备</string>
-    <string name="no_devices_message">未检测到 FIDO 安全密钥。\n\n请确保您的安全密钥已插入。</string>
     <string name="ok">确定</string>
-    <string name="select_security_key">选择安全密钥</string>
     <string name="connecting_usb">正在连接到 USB 设备…</string>
-    <string name="connected_via">已通过 %1$s 连接</string>
     <string name="not_connected">未连接</string>
     <string name="waiting_for_key">请将您的安全密钥贴在手机背面，或通过 USB 连接</string>
     <string name="connection_lost">连接已断开</string>
@@ -201,8 +195,6 @@
     <string name="btn_show_device_status">显示设备状态</string>
     <string name="btn_list_credentials">列出已保存的凭据</string>
     <string name="btn_change_pin">更改 PIN</string>
-    <string name="unknown_device">未知设备</string>
-    <string name="device_info_format">VID：%1$s，PID：%2$s</string>
     <string name="credentials_dialog_title">存储的凭据</string>
     <string name="credentials_stats">%1$d 个凭据 • 剩余 %2$d 个槽位</string>
     <string name="credential_detail_display_name">显示名称</string>
