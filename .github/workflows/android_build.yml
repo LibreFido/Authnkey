@@ -3,9 +3,9 @@ name: Android Build APK
 # Trigger: Run on push or pull request to the main branch
 on:
   push:
-    branches: [ "main", "tmp" ]
+    branches: [ "main", "develop" ]
   pull_request:
-    branches: [ "main", "tmp" ]
+    branches: [ "main", "develop" ]
 
 jobs:
   build:
