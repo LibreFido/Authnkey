@@ -1,0 +1,42 @@
+name: Android Build APK
+
+# Trigger: Run on push or pull request to the main branch
+on:
+  push:
+    branches: [ "main", "dev"]
+  pull_request:
+    branches: [ "main", "dev" ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Set up JDK environment (Modern Android Gradle plugins typically require JDK 17)
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    # 3. Grant execute permission for gradlew (Prevents permission denied errors)
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    # 4. Run Gradle build command (Generates Debug APK)
+    # Note: To build a Release APK, use 'assembleRelease', but you must configure signing first.
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug
+
+    # 5. Upload the generated APK to GitHub Actions artifacts
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+        # Retain the artifact for 30 days
+        retention-days: 30
